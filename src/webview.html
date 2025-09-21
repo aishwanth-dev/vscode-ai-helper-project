@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'nonce-{{NONCE}}';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thaxu AI Assistant</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: #e5e5e5;
+            background: #0a0a0a;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .header {
+            height: 50px;
+            padding: 0 12px;
+            background: #0a0a0a;
+            border-bottom: 1px solid #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            font-size: 11px;
+        }
+        
+        .app-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e5e5e5;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+        
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+            color: #a0a0a0;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #ef4444;
+            transition: background-color 0.3s ease;
+        }
+        
+        .status.connected .status-dot {
+            background: #22c55e;
+        }
+        
+        .top-buttons {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+            background: #0a0a0a;
+            border-bottom: 1px solid #1a1a1a;
+            flex-shrink: 0;
+        }
+        
+        .btn-small {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: #a0a0a0;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            border-radius: 12px;
+            transition: all 0.15s ease;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .btn-small:hover {
+            background: #2a2a2a;
+            border-color: #3a3a3a;
+            color: #e5e5e5;
+        }
+        
+        .btn-force.enabled {
+            background: #0d4f3c;
+            color: #4ade80;
+            border-color: #166534;
+        }
+        
+        .btn-force.cooldown {
+            background: #7c2d12;
+            color: #fb923c;
+            border-color: #c2410c;
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 0;
+            background: #0a0a0a;
+            width: 100%;
+        }
+        
+        .message {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+            animation: messageSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .message.user {
+            align-items: flex-end;
+        }
+        
+        .message.assistant {
+            align-items: flex-start;
+        }
+        
+        .message-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            max-width: 100%;
+            width: fit-content;
+        }
+        
+        .message.user .message-row {
+            flex-direction: row-reverse;
+            margin-left: auto;
+            max-width: 85%;
+        }
+        
+        .message.assistant .message-row {
+            flex-direction: row;
+            margin-right: auto;
+            max-width: 100%;
+        }
+        
+        .message-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+        
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            color: #0f0f0f;
+        }
+        
+        .message-content {
+            padding: 10px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            line-height: 1.4;
+            color: #e5e5e5;
+            word-wrap: break-word;
+            word-break: break-word;
+            position: relative;
+            min-width: 0;
+            max-width: 100%;
+        }
+        
+        .message.user .message-content {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 20px 20px 6px 20px;
+            max-width: calc(100vw - 80px);
+        }
+        
+        .message.assistant .message-content {
+            background: #0f0f0f;
+            border: 1px solid #1a1a1a;
+            border-radius: 20px 20px 20px 6px;
+            max-width: calc(100vw - 60px);
+        }
+        
+        .message-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            margin-top: 4px;
+        }
+        
+        .message:hover .message-footer {
+            opacity: 1;
+        }
+        
+        .message-time {
+            font-size: 9px;
+            color: #666;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+        }
+        
+        .copy-button {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: #a0a0a0;
+            padding: 2px 6px;
+            font-size: 9px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        
+        .copy-button:hover {
+            color: #e5e5e5;
+            background: #2a2a2a;
+            border-color: #3a3a3a;
+        }
+        
+        /* Typography */
+        .message-content p {
+            margin: 0 0 6px 0;
+            line-height: 1.4;
+        }
+        
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .message-content code {
+            background: #1a1a1a;
+            color: #e879f9;
+            padding: 2px 4px;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-size: 11px;
+            border: 1px solid #2a2a2a;
+        }
+        
+        .message-content pre {
+            background: #0f0f0f;
+            border: 1px solid #1a1a1a;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 8px 0;
+            position: relative;
+        }
+        
+        .message-content pre code {
+            background: none;
+            border: none;
+            padding: 12px;
+            display: block;
+            font-size: 11px;
+            line-height: 1.4;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            color: #e5e5e5;
+        }
+        
+        .code-block-container {
+            margin: 8px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #1a1a1a;
+            background: #0f0f0f;
+            position: relative;
+        }
+        
+        .code-block-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 8px 12px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
+            font-size: 10px;
+            color: #a0a0a0;
+            height: 32px;
+            position: relative;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .code-language {
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #e5e5e5;
+            font-size: 10px;
+            letter-spacing: 0.8px;
+            flex: 1;
+        }
+        
+        .code-copy-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 8px;
+            font-size: 12px;
+            opacity: 0;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .code-block-header:hover .code-copy-btn {
+            opacity: 1;
+            background: #2a2a2a;
+            color: #e5e5e5;
+        }
+        
+        .code-copy-btn:hover {
+            background: #3a3a3a !important;
+            color: #4ade80 !important;
+        }
+        
+        .code-copy-btn::before {
+            content: "📋";
+            font-size: 11px;
+        }
+        
+        .code-block-container pre {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+        }
+        
+        .code-block-container pre code {
+            padding: 12px;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        /* Lists */
+        .message-content ul, .message-content ol {
+            margin: 6px 0;
+            padding-left: 18px;
+        }
+        
+        .message-content li {
+            margin: 3px 0;
+            line-height: 1.4;
+        }
+        
+        /* Headers */
+        .message-content h1, .message-content h2, .message-content h3, .message-content h4 {
+            margin: 8px 0 4px 0;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        
+        .message-content h1:first-child, 
+        .message-content h2:first-child, 
+        .message-content h3:first-child, 
+        .message-content h4:first-child {
+            margin-top: 0;
+        }
+        
+        .message-content h1 { font-size: 14px; color: #e5e5e5; } 
+        .message-content h2 { font-size: 13px; color: #e5e5e5; }
+        .message-content h3 { font-size: 12px; color: #a0a0a0; }
+        .message-content h4 { font-size: 11px; color: #a0a0a0; }
+        
+        .message-content strong {
+            font-weight: 600;
+            color: #e5e5e5;
+        }
+        
+        .message-content em {
+            font-style: italic;
+            color: #a0a0a0;
+        }
+        
+        .input-container {
+            padding: 12px;
+            background: #0a0a0a;
+            border-top: 1px solid #1a1a1a;
+            flex-shrink: 0;
+        }
+        
+        .input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            background: transparent;
+            min-height: 32px;
+        }
+        
+        #userInput {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #2a2a2a;
+            background: #1a1a1a;
+            color: #e5e5e5;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            resize: none;
+            min-height: 36px;
+            outline: none;
+            border-radius: 24px;
+            transition: all 0.15s ease;
+        }
+        
+        #userInput:focus {
+            border-color: #4ade80;
+            background: #1a1a1a;
+            box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.1);
+        }
+        
+        #userInput::placeholder {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .send-btn {
+            width: 32px;
+            height: 32px;
+            background: #4ade80;
+            border: 1px solid #22c55e;
+            color: #0f0f0f;
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+        }
+        
+        .send-btn:hover:not(:disabled) {
+            background: #22c55e;
+            border-color: #16a34a;
+            transform: scale(1.05);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .send-btn::before {
+            content: "↑";
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            color: #666;
+            font-size: 11px;
+            margin: 4px 12px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .typing-indicator.show {
+            display: flex;
+        }
+        
+        .typing-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            color: #0f0f0f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .thinking-dots {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .thinking-dot {
+            width: 4px;
+            height: 4px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite;
+        }
+        
+        .thinking-dot:nth-child(1) { animation-delay: 0s; }
+        .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes bounce {
+            0%, 60%, 100% { 
+                transform: translateY(0) scale(1); 
+                opacity: 0.5;
+            }
+            30% { 
+                transform: translateY(-3px) scale(1.1);
+                opacity: 1;
+            }
+        }
+        
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .loading-screen h2 {
+            margin-bottom: 8px;
+            color: #e5e5e5;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .loading-screen p {
+            font-size: 11px;
+            color: #a0a0a0;
+            margin-bottom: 8px;
+        }
+        
+        .cooldown-timer {
+            font-size: 8px;
+            color: #fb923c;
+            text-align: center;
+            margin-top: 4px;
+            padding: 2px 4px;
+            background: rgba(251, 146, 60, 0.1);
+            border-radius: 8px;
+        }
+        
+        .mentor-badge {
+            font-size: 8px;
+            color: #a855f7;
+            text-align: center;
+            margin-top: 2px;
+            padding: 2px 4px;
+            background: rgba(168, 85, 247, 0.1);
+            border-radius: 8px;
+        }
+        
+        .force-enabled-badge {
+            font-size: 8px;
+            color: #4ade80;
+            text-align: center;
+            margin-top: 2px;
+            padding: 2px 4px;
+            background: rgba(74, 222, 128, 0.1);
+            border-radius: 8px;
+        }
+        
+        /* Ultra-thin scrollbar positioned at the edge */
+        .chat-container::-webkit-scrollbar {
+            width: 2px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(42, 42, 42, 0.6);
+            border-radius: 1px;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(58, 58, 58, 0.8);
+        }
+        
+        /* Message animations */
+        @keyframes messageSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(15px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Copy notification */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px) scale(0.9); }
+            20% { opacity: 1; transform: translateY(0) scale(1); }
+            80% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-10px) scale(0.9); }
+        }
+        
+        .copy-notification {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            background: #4ade80;
+            color: #0f0f0f;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: fadeInOut 2s ease-in-out;
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="app-title">Thaxu AI</div>
+        <div class="status-row">
+            <span>Student</span>
+            <div class="status" id="status">
+                <div class="status-dot"></div>
+                <span id="statusText">Ready</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="top-buttons">
+        <button class="btn-small btn-force" id="forceBtn">Force: OFF</button>
+        <button class="btn-small" id="helpBtn">Help</button>
+        <button class="btn-small" id="clearBtn">Clear</button>
+    </div>
+    
+    <div id="loadingScreen" class="loading-screen">
+        <h2>Thaxu AI</h2>
+        <p>Initializing assistant...</p>
+        <div class="thinking-dots">
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+        </div>
+    </div>
+    
+    <div class="chat-container" id="chatContainer" style="display: none;"></div>
+    
+    <div class="typing-indicator" id="typing">
+        <div class="typing-avatar">AI</div>
+        <span>Thaxu is thinking</span>
+        <div class="thinking-dots">
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+        </div>
+    </div>
+    
+    <div class="input-container" style="display: none;" id="inputContainer">
+        <div class="input-wrapper">
+            <textarea id="userInput" placeholder="Plan, search, build anything..." rows="1"></textarea>
+            <button class="send-btn" id="sendBtn"></button>
+        </div>
+        <div class="cooldown-timer" id="cooldownTimer" style="display: none;"></div>
+        <div class="mentor-badge" id="mentorBadge" style="display: none;">Mentor Mode Active</div>
+        <div class="force-enabled-badge" id="forceEnabledBadge" style="display: none;">Force Answer: ON</div>
+    </div>
+
+    <script nonce="{{NONCE}}">
+        const vscode = acquireVsCodeApi();
+        let messages = [];
+        let isInitialized = false;
+        let cooldownActive = false;
+        let forceAnswerEnabled = false;
+        let mentorMode = false;
+        let cooldownEndTime = 0;
+        
+        // DOM elements
+        const loadingScreen = document.getElementById('loadingScreen');
+        const chatContainer = document.getElementById('chatContainer');
+        const inputContainer = document.getElementById('inputContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const forceBtn = document.getElementById('forceBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        const status = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const typing = document.getElementById('typing');
+        const cooldownTimer = document.getElementById('cooldownTimer');
+        const mentorBadge = document.getElementById('mentorBadge');
+        const forceEnabledBadge = document.getElementById('forceEnabledBadge');
+        
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            const newHeight = Math.min(this.scrollHeight, 80);
+            this.style.height = newHeight + 'px';
+        });
+        
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        forceBtn.addEventListener('click', toggleForceAnswer);
+        clearBtn.addEventListener('click', clearChat);
+        helpBtn.addEventListener('click', showHelp);
+        
+        // Keyboard shortcuts
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        function updateStatus(text, connected = false) {
+            statusText.textContent = text;
+            if (connected) {
+                status.classList.add('connected');
+            } else {
+                status.classList.remove('connected');
+            }
+        }
+        
+        function showLoadingScreen(show = true) {
+            if (show) {
+                loadingScreen.style.display = 'flex';
+                chatContainer.style.display = 'none';
+                inputContainer.style.display = 'none';
+            } else {
+                loadingScreen.style.display = 'none';
+                chatContainer.style.display = 'flex';
+                inputContainer.style.display = 'block';
+            }
+        }
+        
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message || !isInitialized) return;
+            
+            updateStatus('Sending...', false);
+            
+            try {
+                vscode.postMessage({ type: 'sendMessage', message: message });
+                userInput.value = '';
+                userInput.style.height = '36px';
+                sendBtn.disabled = true;
+                
+                setTimeout(() => {
+                    sendBtn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                updateStatus('Send failed', false);
+                sendBtn.disabled = false;
+            }
+        }
+        
+        function toggleForceAnswer() {
+            if (cooldownActive) {
+                const remaining = Math.ceil((cooldownEndTime - Date.now()) / 1000);
+                showNotification('Force Answer is on cooldown. Wait ' + remaining + ' seconds.', 'warning');
+                return;
+            }
+            
+            updateStatus('Toggling...', false);
+            
+            try {
+                vscode.postMessage({ type: 'toggleForceAnswer' });
+            } catch (error) {
+                updateStatus('Toggle failed', false);
+            }
+        }
+        
+        function copyMessage(messageIndex) {
+            try {
+                vscode.postMessage({ type: 'copyMessage', messageIndex: messageIndex });
+            } catch (error) {
+                console.error('Copy failed:', error);
+            }
+        }
+        
+        function copyCodeBlock(codeContent) {
+            try {
+                navigator.clipboard.writeText(codeContent).then(() => {
+                    showNotification('Code copied!', 'success');
+                });
+            } catch (error) {
+                console.error('Copy failed:', error);
+                showNotification('Copy failed', 'error');
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'copy-notification';
+            notification.textContent = message;
+            
+            if (type === 'warning') {
+                notification.style.background = '#fb923c';
+                notification.style.color = '#0f0f0f';
+            } else if (type === 'error') {
+                notification.style.background = '#ef4444';
+                notification.style.color = '#fff';
+            }
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        }
+        
+        function clearChat() {
+            try {
+                vscode.postMessage({ type: 'clearChat' });
+                updateStatus('Clearing...', false);
+            } catch (error) {
+                updateStatus('Clear failed', false);
+            }
+        }
+        
+        function showHelp() {
+            const helpMessage = `**Thaxu AI Assistant Help**
+
+**Available Commands:**
+- Type any coding question and press Enter
+- Shift+Enter for multi-line input
+
+**Features:**
+- Code explanations
+- Code completion and improvements
+- Mini project generation
+- Programming concepts help
+
+**Force Answer Mode:**
+- Click Force Answer to toggle ON/OFF
+- Provides direct, concise answers
+- 2-minute cooldown after first use
+
+**Tips:**
+- Select code in editor and right-click for context menu
+- Try: "Create a simple calculator in Python"`;
+            
+            addMessage('user', 'Help requested');
+            addMessage('assistant', helpMessage);
+        }
+        
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const messageRow = document.createElement('div');
+            messageRow.className = 'message-row';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? 'U' : 'AI';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            const processedContent = processMarkdown(content);
+            messageContent.innerHTML = processedContent;
+            
+            const messageFooter = document.createElement('div');
+            messageFooter.className = 'message-footer';
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-button';
+            copyBtn.textContent = 'Copy';
+            copyBtn.onclick = () => copyMessage(messages.length);
+            
+            const messageTime = document.createElement('div');
+            messageTime.className = 'message-time';
+            messageTime.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            messageFooter.appendChild(messageTime);
+            messageFooter.appendChild(copyBtn);
+            
+            messageRow.appendChild(avatar);
+            messageRow.appendChild(messageContent);
+            
+            messageDiv.appendChild(messageRow);
+            messageDiv.appendChild(messageFooter);
+            
+            messages.push({role, content, timestamp: Date.now()});
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function processMarkdown(text) {
+            if (!text) return '';
+            
+            let html = text
+                // Process code blocks first (multiline)
+                .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+                    const language = lang || 'text';
+                    return `
+                        <div class="code-block-container">
+                            <div class="code-block-header">
+                                <span class="code-language">${language}</span>
+                                <button class="code-copy-btn" onclick="copyCodeBlock(\`${code.replace(/`/g, '\\`')}\`)"></button>
+                            </div>
+                            <pre><code>${escapeHtml(code)}</code></pre>
+                        </div>
+                    `;
+                })
+                // Process inline code
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                // Process headers
+                .replace(/^### (.*$)/gm, '<h4>$1</h4>')
+                .replace(/^## (.*$)/gm, '<h3>$1</h3>')
+                .replace(/^# (.*$)/gm, '<h2>$1</h2>')
+                // Process bold
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                // Process italic
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                // Process line breaks
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+            
+            // Wrap in paragraph tags if not already wrapped
+            if (!html.includes('<p>') && !html.includes('<h') && !html.includes('<div')) {
+                html = '<p>' + html + '</p>';
+            }
+            
+            return html;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Message handling from VS Code
+        window.addEventListener('message', event => {
+            const message = event.data;
+            
+            switch (message.type) {
+                case 'initComplete':
+                    isInitialized = true;
+                    showLoadingScreen(false);
+                    updateStatus('Connected', true);
+                    break;
+                    
+                case 'updateChat':
+                    messages = message.messages || [];
+                    cooldownActive = message.cooldownActive || false;
+                    forceAnswerEnabled = message.forceAnswerEnabled || false;
+                    mentorMode = message.mentorMode || false;
+                    cooldownEndTime = message.cooldownEndTime || 0;
+                    
+                    updateChatDisplay();
+                    updateButtonStates();
+                    updateBadges();
+                    break;
+                    
+                case 'forceReset':
+                    messages = [];
+                    cooldownActive = false;
+                    forceAnswerEnabled = false;
+                    mentorMode = false;
+                    cooldownEndTime = 0;
+                    
+                    updateChatDisplay();
+                    updateButtonStates();
+                    updateBadges();
+                    break;
+                    
+                case 'showTyping':
+                    typing.classList.add('show');
+                    updateStatus('Thinking...', true);
+                    break;
+                    
+                case 'hideTyping':
+                    typing.classList.remove('show');
+                    updateStatus('Connected', true);
+                    break;
+                    
+                case 'testResponse':
+                    updateStatus('Connected', true);
+                    break;
+                    
+                case 'debugResponse':
+                    updateStatus('Debug OK', true);
+                    break;
+                    
+                case 'error':
+                    updateStatus('Error', false);
+                    break;
+            }
+        });
+        
+        function updateChatDisplay() {
+            chatContainer.innerHTML = '';
+            
+            messages.forEach((msg, index) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${msg.role}`;
+                
+                const messageRow = document.createElement('div');
+                messageRow.className = 'message-row';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = msg.role === 'user' ? 'U' : 'AI';
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.innerHTML = processMarkdown(msg.content);
+                
+                const messageFooter = document.createElement('div');
+                messageFooter.className = 'message-footer';
+                
+                const messageTime = document.createElement('div');
+                messageTime.className = 'message-time';
+                const time = new Date(msg.timestamp);
+                messageTime.textContent = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-button';
+                copyBtn.textContent = 'Copy';
+                copyBtn.onclick = () => copyMessage(index);
+                
+                messageFooter.appendChild(messageTime);
+                messageFooter.appendChild(copyBtn);
+                
+                messageRow.appendChild(avatar);
+                messageRow.appendChild(messageContent);
+                
+                messageDiv.appendChild(messageRow);
+                messageDiv.appendChild(messageFooter);
+                
+                chatContainer.appendChild(messageDiv);
+            });
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function updateButtonStates() {
+            if (cooldownActive) {
+                forceBtn.textContent = 'Force: COOLDOWN';
+                forceBtn.className = 'btn-small btn-force cooldown';
+                forceBtn.disabled = true;
+            } else if (forceAnswerEnabled) {
+                forceBtn.textContent = 'Force: ON';
+                forceBtn.className = 'btn-small btn-force enabled';
+                forceBtn.disabled = false;
+            } else {
+                forceBtn.textContent = 'Force: OFF';
+                forceBtn.className = 'btn-small btn-force';
+                forceBtn.disabled = false;
+            }
+        }
+        
+        function updateBadges() {
+            // Update cooldown timer
+            if (cooldownActive && cooldownEndTime > Date.now()) {
+                const remaining = Math.ceil((cooldownEndTime - Date.now()) / 1000);
+                cooldownTimer.textContent = `Cooldown: ${remaining}s`;
+                cooldownTimer.style.display = 'block';
+                
+                // Update every second
+                setTimeout(updateBadges, 1000);
+            } else {
+                cooldownTimer.style.display = 'none';
+            }
+            
+            // Update mentor badge
+            if (mentorMode) {
+                mentorBadge.style.display = 'block';
+            } else {
+                mentorBadge.style.display = 'none';
+            }
+            
+            // Update force enabled badge
+            if (forceAnswerEnabled && !cooldownActive) {
+                forceEnabledBadge.style.display = 'block';
+            } else {
+                forceEnabledBadge.style.display = 'none';
+            }
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            showLoadingScreen(true);
+            updateStatus('Starting...', false);
+            
+            try {
+                vscode.postMessage({ type: 'webviewReady' });
+            } catch (error) {
+                updateStatus('Init failed', false);
+            }
+        });
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && isInitialized) {
+                updateBadges();
+            }
+        });
+    </script>
+</body>
+</html>

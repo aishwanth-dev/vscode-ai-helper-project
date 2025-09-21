@@ -1,0 +1,224 @@
+{
+  "name": "apollo-ai-assistant",
+  "displayName": "Apollo AI Assistant",
+  "description": "AI-powered coding assistant with personalized fine-tuned model",
+  "version": "1.2.0",
+  "publisher": "your-publisher-name",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Education",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "assistant",
+    "coding",
+    "copilot",
+    "qwen",
+    "education"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aigen.openSidebar",
+        "title": "Open Apollo AI Sidebar",
+        "category": "Apollo AI"
+      },
+      {
+        "command": "aigen.explainSelection",
+        "title": "Explain Code",
+        "category": "Apollo AI"
+      },
+      {
+        "command": "aigen.completeCode",
+        "title": "Complete with AI",
+        "category": "Apollo AI"
+      },
+      {
+        "command": "aigen.inlineCodeEdit",
+        "title": "Inline Code Edit",
+        "category": "Apollo AI"
+      },
+      {
+        "command": "aigen.improveCode",
+        "title": "Improve Code",
+        "category": "Apollo AI"
+      },
+      {
+        "command": "aigen.generateProject",
+        "title": "Generate Mini Project",
+        "category": "Apollo AI"
+      },
+      {
+        "command": "aigen.clearChat",
+        "title": "Clear Chat History",
+        "category": "Apollo AI"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "aigen.openSidebar",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a"
+      },
+      {
+        "command": "aigen.explainSelection",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "editorHasSelection"
+      },
+      {
+        "command": "aigen.completeCode",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "aigen.explainSelection",
+          "when": "editorHasSelection",
+          "group": "apollo-ai@1"
+        },
+        {
+          "command": "aigen.completeCode",
+          "when": "editorTextFocus",
+          "group": "apollo-ai@2"
+        },
+        {
+          "command": "aigen.improveCode",
+          "when": "editorHasSelection",
+          "group": "apollo-ai@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "aigen.openSidebar"
+        },
+        {
+          "command": "aigen.explainSelection",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "aigen.inlineCodeEdit",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "aigen.completeCode",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "aigen.improveCode",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "aigen.generateProject"
+        },
+        {
+          "command": "aigen.clearChat"
+        }
+      ]
+    },
+    "views": {
+      "apollo-ai-sidebar": [
+        {
+          "type": "webview",
+          "id": "apollo-ai-chat",
+          "name": "Apollo AI Assistant",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "apollo-ai-sidebar",
+          "title": "Apollo AI",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Apollo AI Assistant",
+      "properties": {
+        "apolloAI.apiUrl": {
+          "type": "string",
+          "default": "https://ais0909-aigen.hf.space/v1/chat/completions",
+          "description": "Apollo AI API endpoint URL"
+        },
+        "apolloAI.apiKey": {
+          "type": "string",
+          "default": "aigenapikey1234567890",
+          "description": "Apollo AI API secret key"
+        },
+        "apolloAI.maxTokens": {
+          "type": "number",
+          "default": 1500,
+          "description": "Maximum tokens per response"
+        },
+        "apolloAI.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "AI response creativity (0-2)"
+        },
+        "apolloAI.forceAnswerCooldown": {
+          "type": "number",
+          "default": 120,
+          "description": "Force answer cooldown in seconds"
+        },
+        "apolloAI.completionCooldown": {
+          "type": "number",
+          "default": 600,
+          "description": "Code completion cooldown in seconds"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.4",
+    "@vscode/test-electron": "^2.2.0",
+    "@vscode/vsce": "^2.19.0"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/apollo-ai-assistant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/apollo-ai-assistant/issues"
+  },
+  "homepage": "https://github.com/your-username/apollo-ai-assistant#readme",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#667eea",
+    "theme": "dark"
+  }
+}
